@@ -41,7 +41,7 @@ jobs:
         id: generate_artifact
         run: |
           echo "${{ steps.upload_artifact.outputs.artifact-id }}"
-          echo "artifact_url::https://api.github.com/repos/${{ github.repository }}/actions/artifacts/${{ steps.upload_artifact.outputs.artifact-id }}/zip" >> $GITHUB_OUTPUT
+          echo "artifact_url:https://api.github.com/repos/${{ github.repository }}/actions/artifacts/${{ steps.upload_artifact.outputs.artifact-id }}/zip" >> $GITHUB_OUTPUT
   
   deploy:
     name: Deploy to Host
