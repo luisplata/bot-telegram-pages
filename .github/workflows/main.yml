@@ -1,32 +1,95 @@
-name: Build and Upload Artifact
+name: Build and Deploy Bot
 
 on:
-  workflow_dispatch: {}
   push:
     branches:
       - main
 
 jobs:
-  build:
+  build-and-export:
+    name: Build and Export
     runs-on: ubuntu-latest
 
     steps:
+      # Paso 1: Clonar el repositorio
       - name: Check out repository
         uses: actions/checkout@v2
 
+      # Paso 2: Configurar Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
           node-version: '16'
 
+      # Paso 3: Instalar dependencias
       - name: Install dependencies
         run: npm install --production=false
 
+      # Paso 4: Compilar TypeScript
       - name: Build TypeScript
         run: npx tsc
 
-      - name: Upload artifact
+      # Paso 5: Subir artefacto compilado
+      - name: Upload Build Artifact
         uses: actions/upload-artifact@v3
         with:
-          name: compiled-code
-          path: dist/
+          name: Bot_Build
+          path: dist/  # Directorio generado por TypeScript
+
+  deploy:
+    name: Deploy to Host
+    needs: build-and-export
+    runs-on: ubuntu-latest
+
+    steps:
+      # Paso 1: Configurar SSH y descargar artefacto
+      - name: Deploy to Server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            # Definir variables
+            APP_DIR="${HOME}/${{ secrets.APP_DIR }}"
+            ARTIFACT_NAME="Bot_Build.zip"
+            TEMP_ZIP="$APP_DIR/$ARTIFACT_NAME"
+            
+            # Imprimir variables
+            echo "Artifact Name: $ARTIFACT_NAME"
+            echo "Target Directory: $APP_DIR"
+            echo "Temporary ZIP Path: $TEMP_ZIP"
+
+            # Limpiar el directorio si existe
+            if [ -d "$APP_DIR" ]; then
+              echo "Cleaning APP_DIR..."
+              rm -rf "${APP_DIR:?}/*"
+            else
+              echo "Creating APP_DIR..."
+              mkdir -p "$APP_DIR"
+            fi
+
+            # Descargar el archivo ZIP desde GitHub
+            echo "Downloading artifact..."
+            curl -L -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+              "https://api.github.com/repos/${{ github.repository }}/actions/artifacts/${{ needs.build-and-export.outputs.artifact_id }}/zip" \
+              -o "$TEMP_ZIP"
+
+            # Verificar el contenido del ZIP descargado
+            echo "Checking ZIP contents..."
+            unzip -l "$TEMP_ZIP"
+
+            # Comprobar si la descarga fue exitosa
+            if [ $? -ne 0 ]; then
+              echo "Failed to download artifact."
+              exit 1
+            fi
+
+            # Descomprimir el archivo en APP_DIR
+            echo "Extracting ZIP..."
+            unzip -o "$TEMP_ZIP" -d "$APP_DIR"
+
+            # Eliminar el ZIP para evitar conflictos futuros
+            echo "Deleting ZIP..."
+            rm -f "$TEMP_ZIP"
