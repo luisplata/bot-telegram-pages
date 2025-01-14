@@ -37,7 +37,10 @@ jobs:
         id: upload_artifact
         with:
           name: Bot_Build
-          path: dist/  # Directorio generado por TypeScript
+          path: |
+            dist/
+            package.json
+            package-lock.json
           
       - name: Generate Artifact URL
         id: generate_artifact
