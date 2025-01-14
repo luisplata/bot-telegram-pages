@@ -66,6 +66,7 @@ jobs:
             
             # Imprimir variables
             echo "article_url: ${{ needs.build-and-export.outputs.artifact_url_custom }}"
+            echo "article_url: ${{ needs.build-and-export.outputs.artifact_url }}"
             echo "Artifact Name: $ARTIFACT_NAME"
             echo "Target Directory: $APP_DIR"
             echo "Temporary ZIP Path: $TEMP_ZIP"
