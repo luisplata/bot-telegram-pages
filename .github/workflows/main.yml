@@ -31,11 +31,17 @@ jobs:
 
       # Paso 5: Subir artefacto compilado
       - name: Upload Build Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
+        id: upload_artifact
         with:
           name: Bot_Build
           path: dist/  # Directorio generado por TypeScript
-
+          
+      - name: Generate Artifact URL
+        id: generate_artifact
+        run: |
+          echo "::set-output name=artifact_url::https://api.github.com/repos/${{ github.repository }}/actions/artifacts/${{ steps.upload_artifact.outputs.artifact-id }}/zip"
+  
   deploy:
     name: Deploy to Host
     needs: build-and-export
@@ -53,13 +59,19 @@ jobs:
           script: |
             # Definir variables
             APP_DIR="${HOME}/${{ secrets.APP_DIR }}"
-            ARTIFACT_NAME="Bot_Build.zip"
-            TEMP_ZIP="$APP_DIR/$ARTIFACT_NAME"
+            ARTIFACT_URL="${{ needs.build-and-export.outputs.artifact_url }}"
+            TEMP_ZIP="$APP_DIR/Export.zip"
             
             # Imprimir variables
             echo "Artifact Name: $ARTIFACT_NAME"
             echo "Target Directory: $APP_DIR"
             echo "Temporary ZIP Path: $TEMP_ZIP"
+
+            # Imprimir detalles para descargar manualmente el ZIP
+            echo "To download the artifact manually, run the following command:"
+            echo "curl -L -H \"Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}\" \"$ARTIFACT_URL\" -o Export.zip"
+            echo "Alternatively, open this URL in your browser:"
+            echo "$ARTIFACT_URL"
 
             # Limpiar el directorio si existe
             if [ -d "$APP_DIR" ]; then
@@ -70,11 +82,10 @@ jobs:
               mkdir -p "$APP_DIR"
             fi
 
-            # Descargar el archivo ZIP desde GitHub
+            # Descargar el archivo ZIP
             echo "Downloading artifact..."
             curl -L -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-              "https://api.github.com/repos/${{ github.repository }}/actions/artifacts/${{ needs.build-and-export.outputs.artifact_id }}/zip" \
-              -o "$TEMP_ZIP"
+              "$ARTIFACT_URL" -o "$TEMP_ZIP"
 
             # Verificar el contenido del ZIP descargado
             echo "Checking ZIP contents..."
