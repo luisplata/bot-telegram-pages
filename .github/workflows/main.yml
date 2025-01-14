@@ -61,12 +61,12 @@ jobs:
           script: |
             # Definir variables
             APP_DIR="${HOME}/${{ secrets.APP_DIR }}"
-            ARTIFACT_URL="${{ needs.build-and-export.outputs.artifact_url_custom }}"
+            ARTIFACT_URL="${{ steps.generate_artifact.outputs.artifact_url_custom }}"
             TEMP_ZIP="$APP_DIR/Export.zip"
             
             # Imprimir variables
-            echo "article_url_custom: ${{ env.artifact_url_custom }}"
-            echo "article_url: ${{ needs.build-and-export.outputs.artifact_url }}"
+            echo "article_url_custom: ${{ steps.generate_artifact.outputs.artifact_url_custom }}"
+            echo "article_url: ${{ steps.generate_artifact.outputs.artifact_url }}"
             echo "Artifact Name: $ARTIFACT_NAME"
             echo "Target Directory: $APP_DIR"
             echo "Temporary ZIP Path: $TEMP_ZIP"
