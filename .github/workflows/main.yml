@@ -42,8 +42,8 @@ jobs:
       - name: Generate Artifact URL
         id: generate_artifact
         run: |
-          echo "artifact_url_custom=https://api.github.com/repos/${{ github.repository }}/actions/artifacts/${{ steps.upload_artifact.outputs.artifact-id }}/zip" >> $GITHUB_ENV
-          echo "artifact_url=https://api.github.com/repos/${{ github.repository }}/actions/artifacts/${{ steps.upload_artifact.outputs.artifact-id }}/zip" >> $GITHUB_ENV
+          echo "artifact_url_custom=https://api.github.com/repos/${{ github.repository }}/actions/artifacts/${{ steps.upload_artifact.outputs.artifact-id }}/zip" >> $GITHUB_OUTPUT
+          echo "artifact_url=https://api.github.com/repos/${{ github.repository }}/actions/artifacts/${{ steps.upload_artifact.outputs.artifact-id }}/zip" >> $GITHUB_OUTPUT
         
   
   deploy:
